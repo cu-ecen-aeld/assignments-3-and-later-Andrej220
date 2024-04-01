@@ -1,0 +1,2 @@
+CC=aarch64-none-linux-gnu-gcc
+CFLAGS=--sysroot=/home/andrey/toolchain/install-lnx/bin/../aarch64-none-linux-gnu/libc
