@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/bin/sh
 
 FILESDIR=''
 STR=''
@@ -12,7 +12,7 @@ else
 	STR=$2
 fi
 
-if ! [ -d ${FILESDIR}  ]
+if ! [ -d "${FILESDIR}"  ]
 then
 	echo "${FILESDIR} does not exist."
 	exit 1
