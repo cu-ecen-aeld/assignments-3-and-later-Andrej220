@@ -16,15 +16,15 @@ void* threadfunc(void* thread_param)
     int res;
     bool success = false;
     struct thread_data* thread_func_args = (struct thread_data *) thread_param;
-
-    sleep( thread_func_args->wait_to_obtain_ms );
+    
+    usleep( thread_func_args->wait_to_obtain_ms * 1000);
     res = pthread_mutex_lock( thread_func_args->mutex );
     if (res != 0){
         printf("Failed to lock mutex with result %d \n", res);
     }else{    
         success = true;
         printf("Wait to release ms %d \n", thread_func_args->wait_to_release_ms);
-        sleep( thread_func_args->wait_to_release_ms );
+        usleep( thread_func_args->wait_to_release_ms *1000);
     }
     res = pthread_mutex_unlock( thread_func_args->mutex );
     if (res != 0){
