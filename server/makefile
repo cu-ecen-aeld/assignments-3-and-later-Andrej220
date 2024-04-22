@@ -2,7 +2,7 @@
 
 CC = $(CROSS_COMPILE)gcc
 CFLAGS = -Wall -Wextra 
-SRCS = aesdsocket.cpp
+SRCS = aesdsocket.c
 OBJS = $(SRCS:.c=.o)
 TARGET = aesdsocket
 
