@@ -4,8 +4,8 @@
 
 #define PORTNUMBER "9000"
 #define MAXBUFFER 512
-// #define FILENAME "/var/tmp/aesdsocketdata"
-#define FILENAME "/tmp/server.log"
+ #define FILENAME "/var/tmp/aesdsocketdata"
+//#define FILENAME "/tmp/server.log"
 
 Context global_ctx;
 
@@ -22,89 +22,42 @@ void sigetrm_handler(int signum)
 // get sockaddr, IPv4 or IPv6:
 void *get_in_addr(struct sockaddr *sa)
 {
-	if (sa->sa_family == AF_INET)
-	{
+	if (sa->sa_family == AF_INET){
 		return &(((struct sockaddr_in *)sa)->sin_addr);
 	}
 	return &(((struct sockaddr_in6 *)sa)->sin6_addr);
 }
 
-int recieve_text(FILE *istream, FILE *ostream)
-{
+// add buffer to context 
+int recieve_text(int *socketfd, FILE *ostream){
 
-	if (istream == NULL || ostream == NULL)
-	{
-		perror("Invalid file pointers\n");
-		return -1;
-	}
-
-	if (ferror(istream))
-	{
-		perror("Error reading from input stream\n");
+		if (socketfd == NULL || ostream == NULL){
+			perror("Invalid file pointers\n");
 		return -1;
 	}
 	char *buffer;
-	size_t bufflen = 0;
-	buffer = (char *)malloc(MAXBUFFER);
-	if (buffer == NULL)
-	{
+	size_t bytes_recieved = 0;
+	buffer = (char *)calloc(MAXBUFFER, sizeof(char));
+	if (buffer == NULL){
 		perror("Cannot allocate memory\n");
 		return -1;
-	}
-	while (fgets(buffer + bufflen, MAXBUFFER, istream) != NULL)
-	{
-		char *line = readline(buffer, &bufflen);
-		if (line == NULL)
-		{
-			continue;
-		}
-		if (fputs(line, ostream) == EOF)
-		{
+	}	
+
+	while ( (bytes_recieved = recv( *socketfd, buffer, MAXBUFFER, 0)) > 0){
+		if (fputs(buffer, ostream) == EOF){
 			perror("Error writing to output istrea\n");
+			return -1;
 		}
-		printf("%s", line);
+		printf("%s", buffer);
 		fflush(ostream);
-		free(line);
+		send(*socketfd, buffer,bytes_recieved, 0);
 	}
 	free(buffer);
-	perror("End of transmition");
+	perror("End of trasmition");
 	return 0;
 }
 
-char *readline(char *buffer, size_t *bufflen)
-{
-	if (buffer == NULL)
-	{
-		perror("Invalid pointer");
-		return NULL;
-	}
-	char *new_line_p = strchr(buffer, '\n');
-	if (new_line_p != NULL)
-	{
-		size_t newline_len = new_line_p - buffer;
-		char *line = (char *)malloc(newline_len + 2);
-		if (line == NULL)
-		{
-			perror("Error allocating memory.");
-			return NULL;
-		}
-		strncpy(line, buffer, newline_len + 1);
-		line[newline_len + 1] = '\0';
-		memmove(buffer, new_line_p + 1, strlen(new_line_p + 1) + 1);
-		return line;
-	}
-	else
-	{
-		*bufflen = strlen(buffer);
-		buffer = (char *)realloc(buffer, *bufflen + MAXBUFFER + 1);
-		if (buffer == NULL)
-		{
-			perror("Error reallocating memory");
-			exit(EXIT_FAILURE);
-		}
-	}
-	return NULL;
-}
+
 
 int sendfile(char *filename, Context *ctx)
 {
@@ -303,7 +256,7 @@ int main()
 		{
 			// FILE * ostream = fopen(FILENAME,"a+");
 			ctx->ostream = fopen(FILENAME, "a+");
-			recieve_text(ctx->istream, ctx->ostream);
+			recieve_text(ctx->acceptfd, ctx->ostream);
 			// send data back befoe return;
 			sendfile(FILENAME, ctx);
 			fclose(ctx->istream);

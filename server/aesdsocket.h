@@ -35,7 +35,7 @@ typedef struct {
 
 }Context;
 
-char *readline(char * buffer, size_t * bufflen);
-int recieve_text(FILE * istream, FILE *ostream);
+
+int recieve_text(int *socketfd, FILE *ostream);
 int closeconnection(Context * ctx);
 int open_connection(Context *ctx);
