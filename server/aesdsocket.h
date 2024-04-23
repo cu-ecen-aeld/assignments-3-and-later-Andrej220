@@ -3,6 +3,8 @@
 //#include <string.h>
 #include <sys/types.h>
 #include <sys/socket.h>
+#include <sys/stat.h>
+#include <sys/wait.h>
 #include <netdb.h>
 #include <stdlib.h>
 #include <unistd.h>
@@ -12,10 +14,9 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <syslog.h>
-#include <sys/types.h>
-#include <sys/wait.h>
 #include <fcntl.h>
 #include <signal.h>
+#include <unistd.h>
 
 typedef struct {
 	//int  *socketfd;
@@ -25,9 +26,7 @@ typedef struct {
 	FILE  *backstream;
 	char *backstream_buffer;
 	struct sockaddr * theiraddres;
-	pid_t *child_pid;
 	int *socfd;
-	//int *acceptfd;
 	struct addrinfo *hints;
 	struct addrinfo *servinfo;
 	struct sockaddr_storage *their_addr;
@@ -35,7 +34,9 @@ typedef struct {
 
 }Context;
 
-
-int recieve_text(int *socketfd, FILE *ostream);
+int recieve_text(int istream, FILE *ostream);
 int closeconnection(Context * ctx);
 int open_connection(Context *ctx);
+int sendfile(char *filename, Context *ctx);
+int deleteFile();
+void start_daemon();
