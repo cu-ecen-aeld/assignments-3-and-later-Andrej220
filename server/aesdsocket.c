@@ -2,8 +2,8 @@
 
 #define PORTNUMBER "9000"
 #define MAXBUFFER 4096
-#define FILENAME "/var/tmp/aesdsocketdata"
-//#define FILENAME "/tmp/server.log"
+//#define FILENAME "/var/tmp/aesdsocketdata"
+#define FILENAME "/tmp/server.log"
 
 Context global_ctx;
 
