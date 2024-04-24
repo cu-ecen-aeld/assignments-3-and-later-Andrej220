@@ -206,7 +206,7 @@ void start_daemon(){
 	}
 	daemon_pid = fork();
 
-	daemon_pid = fork();
+	//daemon_pid = fork();
 	if (daemon_pid < 0){
 		syslog(LOG_ERR,"Unable to fork");
 		exit(EXIT_FAILURE);
