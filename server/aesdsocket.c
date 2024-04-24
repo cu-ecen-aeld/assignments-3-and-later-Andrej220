@@ -218,9 +218,10 @@ void start_daemon(){
 	umask(0);
 	chdir("/");
 
-	for(int x=1; x<4; x++){
-		close(x);
-	}
+	//for(int x=1; x<4; x++){
+	//	close(x);
+	//}
+
 	syslog(LOG_DEBUG, "Started daemon");
 
 }
