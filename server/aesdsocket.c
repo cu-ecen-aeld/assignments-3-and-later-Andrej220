@@ -225,9 +225,17 @@ void start_daemon(){
 
 }
 
-int main(){
+int main( int argc, char *argv[] ){
+
+	int daemon = 0;
 	openlog("Assignment 5-1", LOG_PID, LOG_LOCAL1);
 	syslog(LOG_DEBUG, "Starting application");
+	int opt;
+	while((opt=getopt(argc, argv, "d")) != -1 ){
+		if (opt == 'd'){
+			daemon = 1;
+		}
+	}
 
 	pid_t child_pid;
 	socklen_t addr_size;
@@ -243,7 +251,10 @@ int main(){
 		closeconnection(ctx);
 		return -1;
 	}
-	start_daemon();
+
+	if(daemon){
+		start_daemon();
+	}
 
 	while (1){
 		addr_size = sizeof their_addr;
