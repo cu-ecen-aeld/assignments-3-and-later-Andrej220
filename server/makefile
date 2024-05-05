@@ -1,7 +1,8 @@
 .PHONY: all, clean
 
 CC = $(CROSS_COMPILE)gcc
-CFLAGS = -Wall -Wextra -g
+CFLAGS = -Wall -Wextra -g 
+LDFLAGS = -pthread -lrt
 SRCS = aesdsocket.c
 OBJS = $(SRCS:.c=.o)
 TARGET = aesdsocket
@@ -9,7 +10,7 @@ TARGET = aesdsocket
 all: $(TARGET)
 
 $(TARGET): $(OBJS)
-	$(CC) $(CFLAGS) -o $@ $^
+	$(CC) $(CFLAGS) -o $@ $^ $(LDFLAGS)
 
 clean:
 	rm -f $(TARGET) $(OBJS)

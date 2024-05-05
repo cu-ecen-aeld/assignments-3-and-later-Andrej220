@@ -17,6 +17,7 @@
 #include <fcntl.h>
 #include <signal.h>
 #include <unistd.h>
+#include <pthread.h>
 
 typedef struct {
 	//int  *socketfd;
@@ -34,9 +35,18 @@ typedef struct {
 
 }Context;
 
-int recieve_text(int istream, FILE *ostream);
+typedef struct {
+	int * istream;
+	FILE *ostream;
+} Textreciveargs_t;
+
+void* recieve_text(void *t);
+
 int closeconnection(Context * ctx);
 int open_connection(Context *ctx);
 int sendfile(char *filename, Context *ctx);
 int deleteFile();
 void start_daemon();
+
+int savetofile(char * buffer);
+void setuptimer();
