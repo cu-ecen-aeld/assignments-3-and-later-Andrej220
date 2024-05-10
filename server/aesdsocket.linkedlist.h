@@ -24,47 +24,47 @@
 #define MAXBUFFER 4096
 #define WAITINGTIME 10
 #define FILENAME "/var/tmp/aesdsocketdata"
+const char *fileName = FILENAME;
+#define LOGFACILITY "Assignments"
 
 struct Connections_t {
-    int done;
-	pthread_t pid;
+    int 		done;
+	FILE 	   *ostream;
+	const char	   *filename;
+	int  		istream;
+	pthread_t 	pid;
+	char 		s[INET6_ADDRSTRLEN];
     SLIST_ENTRY(Connections_t) entries;
 } ;
 
 typedef struct {
-	//int  *socketfd;
-	int  *acceptfd;
-	FILE  *istream;
-	FILE  *ostream;
-	FILE  *backstream;
-	char *backstream_buffer;
-	struct sockaddr * theiraddres;
-	int *socfd;
-	struct addrinfo *hints;
-	struct addrinfo *servinfo;
-	struct sockaddr_storage *their_addr;
-	char s[INET6_ADDRSTRLEN];
+	FILE  *	backstream;
+	char *	backstream_buffer;
+	struct 	sockaddr * theiraddres;
+	int *	socfd;
+	struct 	addrinfo *hints;
+	struct 	addrinfo *servinfo;
+	struct 	sockaddr_storage *their_addr;
+	char 	s[INET6_ADDRSTRLEN];
 }Context;
 
 typedef struct {
-	int  istream;
-	FILE *ostream;
 	struct Connections_t *conn;
-	char *s;
-	
 } Textreciveargs_t;
 
 
 void* recieve_text(void *t);
-
 int closeconnection(Context * ctx);
 int open_connection(Context *ctx);
-int sendfile(char *filename, Context *ctx);
+int sendfile(FILE * fd, int stream);
 int deleteFile();
 void start_daemon();
 
-int savetofile(char * buffer);
+int savetofile(char * buffer, FILE * ostream);
+int savetime(char * buffer);
 void setuptimer();
+void * timer_thread();
+void timer_handler();
 void check_completed_threads();
 void delElement(struct Connections_t *conn);
-struct Connections_t * newElement(pthread_t pid);
+struct Connections_t * newElement();

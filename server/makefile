@@ -1,9 +1,9 @@
 .PHONY: all, clean
 
-CC = $(CROSS_COMPILE)gcc
+CC := $(CROSS_COMPILE)gcc
 CFLAGS = -Wall -Wextra -g 
 LDFLAGS = -pthread -lrt
-SRCS = aesdsocket.c
+SRCS = aesdsocket_linkedlists.c
 OBJS = $(SRCS:.c=.o)
 TARGET = aesdsocket
 

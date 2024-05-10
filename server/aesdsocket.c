@@ -295,6 +295,13 @@ void start_daemon(){
 
 }
 
+void closeActiveConnection(Context *ctx){
+	close(*ctx->acceptfd);
+	ctx->istream = NULL;
+	fclose(ctx->ostream);
+	ctx->ostream = NULL;
+}
+
 int main( int argc, char *argv[] ){
 
 	int daemon = 0;
@@ -316,7 +323,6 @@ int main( int argc, char *argv[] ){
 	pid_t child_pid;
 	socklen_t addr_size;
 	struct sockaddr_storage their_addr;
-	//int child_status;
 	int socfd, acceptfd;
 	Context *ctx = &global_ctx;
 
@@ -360,18 +366,12 @@ int main( int argc, char *argv[] ){
 			if( pthread_create(&thread_id, NULL, recieve_text,(void*) thread_args) < 0) {
 				syslog(LOG_ERR,"Could not create a thread");
 				free(thread_args);
-				close(*ctx->acceptfd);
-				ctx->istream = NULL;
-				fclose(ctx->ostream);
-				ctx->ostream = NULL;
+				closeActiveConnection(ctx);
 				exit(EXIT_FAILURE);
 			}
 			pthread_join(thread_id,NULL);
 			syslog(LOG_DEBUG, "Closed connection from %s", ctx->s);
-			close(*ctx->acceptfd);
-			ctx->istream = NULL;
-			fclose(ctx->ostream);
-			ctx->ostream = NULL;
+			closeActiveConnection(ctx);
 			exit(EXIT_SUCCESS);
 		} else {
 			/*
