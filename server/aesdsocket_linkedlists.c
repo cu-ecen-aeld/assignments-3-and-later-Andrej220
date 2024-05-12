@@ -182,8 +182,10 @@ int closeconnection(Context *ctx)
 	}
 	syslog(LOG_DEBUG, "Deleting file");
 	deleteFile();
-
-
+	pthread_mutex_destroy(&filemutex);
+	pthread_mutex_destroy(&sendmutex);
+	pthread_mutex_destroy(&mutex);
+	
 	return 0;
 }
 

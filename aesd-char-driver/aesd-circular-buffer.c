@@ -31,7 +31,16 @@ struct aesd_buffer_entry *aesd_circular_buffer_find_entry_offset_for_fpos(struct
 {
     /**
     * TODO: implement per description
-    */
+    */ 
+    size_t boffset = 0;
+
+    for (int i = buffer->out_offs, count = 0; count < AESDCHAR_MAX_WRITE_OPERATIONS_SUPPORTED; i = (i + 1) % AESDCHAR_MAX_WRITE_OPERATIONS_SUPPORTED, count ++){
+        if(char_offset < boffset + buffer->entry[i].size){
+            *entry_offset_byte_rtn = char_offset - boffset;
+            return &buffer->entry[i];
+        }
+        boffset += buffer->entry[i].size;
+    }
     return NULL;
 }
 
@@ -43,12 +52,17 @@ struct aesd_buffer_entry *aesd_circular_buffer_find_entry_offset_for_fpos(struct
 * Any memory referenced in @param add_entry must be allocated by and/or must have a lifetime managed by the caller.
 */
 void aesd_circular_buffer_add_entry(struct aesd_circular_buffer *buffer, const struct aesd_buffer_entry *add_entry)
-{
+{ 
     /**
     * TODO: implement per description
     */
+    buffer->entry[buffer->in_offs] = *add_entry;
+    buffer->in_offs = (buffer->in_offs + 1) % AESDCHAR_MAX_WRITE_OPERATIONS_SUPPORTED;
+    if(buffer->full){
+        buffer->out_offs = (buffer->out_offs +1)%AESDCHAR_MAX_WRITE_OPERATIONS_SUPPORTED;
+    }
+    buffer->full = (buffer->in_offs == buffer->out_offs);
 }
-
 /**
 * Initializes the circular buffer described by @param buffer to an empty struct
 */
