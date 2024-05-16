@@ -1,4 +1,4 @@
-# analysis of this kernel oops in an assignments/assignment7/faulty-oops
+# analysis of this kernel oops 
 \# echo "Hello world!" > /dev/faulty 
 ```
 Unable to handle kernel NULL pointer dereference at virtual address 0000000000000000
