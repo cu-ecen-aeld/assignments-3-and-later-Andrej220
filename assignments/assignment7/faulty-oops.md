@@ -1,4 +1,6 @@
-# echo "Hello world!" > /dev/faulty 
+# analysis of this kernel oops in an assignments/assignment7/faulty-oops
+\# echo "Hello world!" > /dev/faulty 
+```
 Unable to handle kernel NULL pointer dereference at virtual address 0000000000000000
 Mem abort info:
   ESR = 0x96000045
@@ -41,3 +43,13 @@ Call trace:
  el0t_64_sync+0x1a0/0x1a4
 Code: d2800001 d2800000 d503233f d50323bf (b900003f) 
 ---[ end trace f9694691629dae2d ]---
+```
+### General description
+
+```Unable to handle kernel NULL pointer dereference at virtual```
+
+### Call trace
+
+``` pc : faulty_write+0x14/0x20 [faulty] ```
+
+  programm counter was in the **faulty_write** function within the **faulty** module.
