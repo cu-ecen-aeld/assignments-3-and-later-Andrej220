@@ -27,36 +27,29 @@ MODULE_LICENSE("Dual BSD/GPL");
 struct aesd_dev aesd_device;
 
 int aesd_open(struct inode *inode, struct file *filp){
-    //struct aesd_dev * aesd_ctx;
+    struct aesd_dev * dev;
+    dev =  container_of(inode->i_cdev, struct aesd_dev, cdev);
+    filp->private_data = dev;
 
-    PDEBUG("aesd: Device opened\n");
-    ///**
-    // * TODO: handle open
-    // */
-    //aesd_ctx = kmalloc(sizeof(struct aesd_dev), GFP_KERNEL);
-    //if(! aesd_ctx){
-    //    PDEBUG("aesd: Failed to allocate memory for device context");
-    //    return -ENOMEM;
-    //}
-    ////TO DO: initalize aesd_dev struct
-    //filp->private_data = aesd_ctx;
-    //aesd_ctx->circular_buffer = kmalloc(sizeof(struct aesd_circular_buffer), GFP_KERNEL);
-    //aesd_circular_buffer_init(aesd_ctx->circular_buffer);
-    PDEBUG("Open function, allocated context struct and circular buffer\n");
+    PDEBUG("Device opened\n");
+   
     return 0;
 }
 
 int aesd_release(struct inode *inode, struct file *filp){
-    struct aesd_dev * aesd_ctx;
+    //struct aesd_dev * dev = filp->private_data;
     PDEBUG("release");
     /**
      * TODO: handle release
      */
-    // release circular buffer
-    aesd_ctx = (struct aesd_dev *) filp->private_data;
-    kfree(aesd_ctx->circular_buffer);
-    kfree(aesd_ctx);
-    PDEBUG("release function: released circular buffer and context struct\n");
+    //Example usage:
+    //uint8_t index;
+    //struct aesd_circular_buffer buffer = dev->circular_buffer;
+    //struct aesd_buffer_entry *entry;
+    
+    //AESD_CIRCULAR_BUFFER_FOREACH(entry,&buffer,index) {
+    //     kfree(entry->buffptr);
+    //}
     return 0;
 }
 
@@ -64,43 +57,37 @@ ssize_t aesd_read(struct file *filp, char __user *buf, size_t count,
                 loff_t *f_pos)
 {
     ssize_t retval = 0;
+
+    //struct aesd_dev * dev = filp->private_data;
     PDEBUG("read %zu bytes with offset %lld",count,*f_pos);
-    /**
-     * TODO: handle read
-     */
 
-    //struct aesd_circular_buffer * aesd_buffer = (aesd_circular_buffer *) filp->private_data
-
-    //struct aesd_buffer_entry * buffer_entry =  aesd_circular_buffer_find_entry_offset_for_fpos(aesd_buffer, size_t char_offset, size_t *entry_offset_byte_rtn );
-
-    PDEBUG("read function is not ready yet\n");
     return retval;
 }
 
 ssize_t aesd_write(struct file *filp, const char __user *buf, size_t count, loff_t *f_pos){
-    //char * kernel_buffer;
+    struct aesd_dev * dev = filp->private_data;
     ssize_t retval = -ENOMEM;
+    ssize_t remain;
     PDEBUG("write %zu bytes with offset %lld",count,*f_pos);
-    /**
-     * TODO: handle write
-     */
-    //kernel_buffer = kmalloc(count, GFP_KERNEL);
-    //if (! kernel_buffer){
-    //    goto out;
-    //}
-    //if (copy_from_user(kernel_buffer, buf, count)){
-    //    goto out_free;
-    //}
-    //
-    //// TODO: add datat to circular buffer
-    //retval = count;
-//
-    //out_free:
-    //    kfree(kernel_buffer);
-    //out:
-    //PDEBUG("Writeen: %s \n", buf );
-    PDEBUG("write is not completed yet\n");
 
+    if (dev->entry.size == 0){
+        dev->entry.buffptr = kmalloc(count, GFP_KERNEL);
+    }else{
+        dev->entry.buffptr = krealloc(dev->entry.buffptr, dev->entry.size + count, GFP_KERNEL);
+    }
+    if(dev->entry.buffptr == NULL){
+        return retval;
+    }
+
+    remain = copy_from_user((void*) &dev->entry.buffptr[dev->entry.size], buf, count);
+    retval = count -remain;
+    dev->entry.size = count + retval;
+
+    if(strchr((char *) dev->entry.buffptr, '\n')){
+        aesd_circular_buffer_add_entry(&dev->circular_buffer, &dev->entry);
+        dev->entry.buffptr = NULL;
+        dev->entry.size = 0;
+    }
     return retval;
 }
 
@@ -114,8 +101,6 @@ struct file_operations aesd_fops = {
 
 static int aesd_setup_cdev(struct aesd_dev *dev){
     int err, devno = MKDEV(aesd_major, aesd_minor);
-    PDEBUG("Setup function is not ready yet\n");
-
     cdev_init(&dev->cdev, &aesd_fops);
     dev->cdev.owner = THIS_MODULE;
     dev->cdev.ops = &aesd_fops;
@@ -123,7 +108,6 @@ static int aesd_setup_cdev(struct aesd_dev *dev){
     if (err) {
         printk(KERN_ERR "Error %d adding aesd cdev", err);
     }
-    PDEBUG("aesd setup cdev function is not ready yet\n");
     return err;
 }
 
@@ -142,10 +126,6 @@ int aesd_init_module(void){
     /**
      * TODO: initialize the AESD specific portion of the device
      */
-    
-    // circular buffer initialization
-    aesd_device.circular_buffer = kmalloc(sizeof(struct aesd_circular_buffer), GFP_KERNEL);
-    aesd_circular_buffer_init(aesd_device.circular_buffer);
 
 
     result = aesd_setup_cdev(&aesd_device);
@@ -153,7 +133,6 @@ int aesd_init_module(void){
     if( result ) {
         unregister_chrdev_region(dev, 1);
     }
-    PDEBUG("Init function is not ready yet\n");
     return result;
 
 }
@@ -166,10 +145,8 @@ void aesd_cleanup_module(void){
     /**
      * TODO: cleanup AESD specific poritions here as necessary
      */
-    kfree(aesd_device.circular_buffer);
 
     unregister_chrdev_region(devno, 1);
-    PDEBUG("Clean up function is not ready yet\n");
 }
 
 
