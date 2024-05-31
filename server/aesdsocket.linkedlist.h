@@ -23,7 +23,8 @@
 #define PORTNUMBER "9000"
 #define MAXBUFFER 4096
 #define WAITINGTIME 10
-#define FILENAME "/var/tmp/aesdsocketdata"
+#define FILENAME "/dev/aesdchar"
+//#define FILENAME "/var/tmp/aesdsocketdata"
 const char *fileName = FILENAME;
 #define LOGFACILITY "Assignments"
 

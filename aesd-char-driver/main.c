@@ -37,10 +37,10 @@ int aesd_open(struct inode *inode, struct file *filp){
 }
 
 int aesd_release(struct inode *inode, struct file *filp){
-    struct aesd_dev * dev = filp->private_data;
-    uint8_t index;
-    struct aesd_circular_buffer buffer = dev->circular_buffer;
-    struct aesd_buffer_entry *entry;
+    //struct aesd_dev * dev = filp->private_data;
+    //uint8_t index;
+    //struct aesd_circular_buffer buffer = dev->circular_buffer;
+    //struct aesd_buffer_entry *entry;
 
     PDEBUG("release");
     /**
@@ -48,9 +48,9 @@ int aesd_release(struct inode *inode, struct file *filp){
      */
     //Example usage:
     
-    AESD_CIRCULAR_BUFFER_FOREACH(entry,&buffer,index) {
-         kfree(entry->buffptr);
-    }
+    //AESD_CIRCULAR_BUFFER_FOREACH(entry,&buffer,index) {
+    //     kfree(entry->buffptr);
+    //}
     return 0;
 }
 
@@ -75,7 +75,7 @@ ssize_t aesd_read(struct file *filp, char __user *buf, size_t count,
     }else{
         retval = buffer->size - offset;
     }
-
+    PDEBUG("RETVAL : %zd", retval);
     if (copy_to_user(buf, buffer->buffptr + offset, retval) !=0){
         mutex_unlock(&dev->mtx);
         return -EFAULT;
@@ -86,25 +86,32 @@ ssize_t aesd_read(struct file *filp, char __user *buf, size_t count,
 }
 
 ssize_t aesd_write(struct file *filp, const char __user *buf, size_t count, loff_t *f_pos){
+    
     struct aesd_dev * dev = filp->private_data;
     ssize_t retval = -ENOMEM;
-    ssize_t remain;
+    ssize_t remain = 0;
     PDEBUG("write %zu bytes with offset %lld",count,*f_pos);
 
     mutex_lock(&dev->mtx);
     if (dev->entry.size == 0){
-        dev->entry.buffptr = kmalloc(count, GFP_KERNEL);
+        dev->entry.buffptr = kzalloc(count, GFP_KERNEL);
+        PDEBUG("Allocating memory for %zd", count);
     }else{
+        PDEBUG("re Allocating memory for %zd", count);
         dev->entry.buffptr = krealloc(dev->entry.buffptr, dev->entry.size + count, GFP_KERNEL);
     }
     if(dev->entry.buffptr == NULL){
         mutex_unlock(&dev->mtx);
         return retval;
     }
-
     remain = copy_from_user((void*) &dev->entry.buffptr[dev->entry.size], buf, count);
-    retval = count -remain;
-    dev->entry.size = count + retval;
+    PDEBUG("Copied from user buffer to memory, reminded %zd", remain);
+    if (remain > 0){
+        retval = count - remain;
+    }else{
+        retval = count;
+    }
+    dev->entry.size +=  retval;
 
     if(strchr((char *) dev->entry.buffptr, '\n')){
         aesd_circular_buffer_add_entry(&dev->circular_buffer, &dev->entry);
@@ -132,6 +139,8 @@ static int aesd_setup_cdev(struct aesd_dev *dev){
     if (err) {
         printk(KERN_ERR "Error %d adding aesd cdev", err);
     }
+
+    mutex_init(&dev->mtx);
     return err;
 }
 

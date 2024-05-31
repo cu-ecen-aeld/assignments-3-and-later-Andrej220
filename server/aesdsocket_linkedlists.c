@@ -180,8 +180,8 @@ int closeconnection(Context *ctx)
 			delElement(current);
 		}	
 	}
-	syslog(LOG_DEBUG, "Deleting file");
-	deleteFile();
+	//syslog(LOG_DEBUG, "Deleting file");
+	//deleteFile();
 	pthread_mutex_destroy(&filemutex);
 	pthread_mutex_destroy(&sendmutex);
 	pthread_mutex_destroy(&mutex);
@@ -269,7 +269,7 @@ int main( int argc, char *argv[] ){
 	if(daemon){
 		start_daemon();
 	}
-	setuptimer();
+	//setuptimer();
 	SLIST_INIT(&head);
 
 	while (1){
