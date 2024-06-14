@@ -71,7 +71,6 @@ void * recieve_text(void *t){
                 continue;
             }
 
-            // Send the content of the device back to the client
             char read_buffer[MAXBUFFER];
             ssize_t bytes_read;
             while ((bytes_read = read(device_fd, read_buffer, MAXBUFFER)) > 0) {
