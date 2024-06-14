@@ -1,4 +1,6 @@
 #include "aesdsocket.linkedlist.h"
+#include "aesd_ioctl.h"
+#include <errno.h>
 
 Context global_ctx;
 int activethreads = 0;
@@ -44,6 +46,7 @@ void * recieve_text(void *t){
 		syslog(LOG_ERR,"Cannot allocate memory\n");
 		return NULL;
 	}
+
 	FILE * sendfd = fopen(params->filename, "r");
 	if ( sendfd == NULL ){
 		syslog(LOG_ERR, "Can't open file for read");
@@ -53,10 +56,38 @@ void * recieve_text(void *t){
 	do {
 		bytes_recieved = recv(params->istream,buffer,MAXBUFFER,0);
 		buffer[bytes_recieved] = '\0';
-		savetofile(buffer,params->ostream);
-		char * newline = strchr(buffer, '\n');
-		if (newline != NULL){
-			sendfile(sendfd, params->istream);
+
+		struct aesd_seekto seekto;
+        if (sscanf(buffer, "AESDCHAR_IOCSEEKTO:%u,%u", &seekto.write_cmd, &seekto.write_cmd_offset) == 2) {
+            // Perform the ioctl seek command
+            int device_fd = open(FILENAME, O_RDWR);
+            if (device_fd == -1) {
+                syslog(LOG_ERR, "Error opening device file");
+                continue;
+            }
+            if (ioctl(device_fd, AESDCHAR_IOCSEEKTO, &seekto) == -1) {
+                syslog(LOG_ERR, "ioctl AESDCHAR_IOCSEEKTO failed: %s", strerror(errno));
+                close(device_fd);
+                continue;
+            }
+
+            // Send the content of the device back to the client
+            char read_buffer[MAXBUFFER];
+            ssize_t bytes_read;
+            while ((bytes_read = read(device_fd, read_buffer, MAXBUFFER)) > 0) {
+                if (send(params->istream, read_buffer, bytes_read, 0) != bytes_read) {
+                    syslog(LOG_ERR, "Error sending file back.");
+                    break;
+                }
+            }
+            close(device_fd);
+        } else {
+
+			savetofile(buffer,params->ostream);
+			char * newline = strchr(buffer, '\n');
+			if (newline != NULL){
+				sendfile(sendfd, params->istream);
+			}
 		}
 	}while(bytes_recieved > 0);
 	pthread_mutex_unlock(&mutex);

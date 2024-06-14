@@ -38,5 +38,5 @@ struct aesd_dev
     struct mutex mtx;
 };
 
-
+ssize_t aesd_read(struct file *filp, char __user *buf, size_t count, loff_t *f_pos);
 #endif /* AESD_CHAR_DRIVER_AESDCHAR_H_ */

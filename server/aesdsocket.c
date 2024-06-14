@@ -1,4 +1,5 @@
 #include "aesdsocket.h"
+#include "aesd_ioctl.h"
 
 #define PORTNUMBER "9000"
 #define MAXBUFFER 4096
@@ -54,12 +55,42 @@ void *recieve_text(void *t)
 	pthread_mutex_lock(&mutex);
 	while ((bytes_recieved = recv(*params->istream, buffer, MAXBUFFER, 0)) > 0)
 	{
-		buffer[bytes_recieved] = '\0';
-		savetofile(buffer);
-		char *newline = strchr(buffer, '\n');
-		if (newline != NULL)
-		{
-			sendfile(FILENAME, &global_ctx);
+		struct aesd_seekto seekto;
+		print("Degub\n");
+		printf("SEEK_found: %d",sscanf(buffer, "AESDCHAR_IOCSEEKTO:%u,%u", &seekto.write_cmd, &seekto.write_cmd_offset));
+		if(sscanf(buffer, "AESDCHAR_IOCSEEKTO:%u,%u", &seekto.write_cmd, &seekto.write_cmd_offset) == 2){
+			// Perform the ioctl seek command
+            int device_fd = open(FILENAME, O_RDWR);
+            if (device_fd == -1){
+                syslog(LOG_ERR, "Error opening device file");
+                continue;
+            }
+			syslog(LOG_DEBUG,"AESDCHAR_IOSEEKTO: %d, %d", seekto.write_cmd, seekto.write_cmd_offset);
+            if (ioctl(device_fd, AESDCHAR_IOCSEEKTO, &seekto) == -1){
+                syslog(LOG_ERR, "ioctl AESDCHAR_IOCSEEKTO failed: %s", strerror(errno));
+                close(device_fd);
+                continue;
+            }
+
+            // Send the content of the device back to the client
+            //char read_buffer[MAXBUFFER];
+            //ssize_t bytes_read;
+            //while ((bytes_read = read(device_fd, read_buffer, MAXBUFFER)) > 0){
+            //    if (send(*params->istream, read_buffer, bytes_read, 0) != bytes_read)
+            //    {
+            //        syslog(LOG_ERR, "Error sending file back.");
+            //        break;
+            //    }
+            //}
+            close(device_fd);
+
+		} else {
+			buffer[bytes_recieved] = '\0';
+			savetofile(buffer);
+			char *newline = strchr(buffer, '\n');
+			if (newline != NULL){
+				sendfile(FILENAME, &global_ctx);
+			}
 		}
 	}
 	pthread_mutex_unlock(&mutex);
